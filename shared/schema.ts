@@ -121,3 +121,31 @@ export const insertPointHistorySchema = createInsertSchema(pointHistory).pick({
   points: true,
   reason: true,
 });
+
+// Add presets table
+export const presets = pgTable("presets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  settings: jsonb("settings").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type Preset = typeof presets.$inferSelect;
+export type InsertPreset = z.infer<typeof insertPresetSchema>;
+export const insertPresetSchema = createInsertSchema(presets)
+  .pick({
+    userId: true,
+    name: true,
+    description: true,
+    settings: true,
+    isDefault: true,
+  })
+  .extend({
+    settings: z.record(z.number(), z.object({
+      status: z.boolean(),
+      targetUsage: z.number().optional(),
+    })),
+  });

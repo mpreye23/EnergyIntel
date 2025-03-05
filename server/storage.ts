@@ -1,8 +1,8 @@
 import { IStorage } from "./types";
-import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, Achievement, InsertAchievement, PointHistory, InsertPointHistory } from "@shared/schema";
+import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, Achievement, InsertAchievement, PointHistory, InsertPointHistory, Preset, InsertPreset } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users, devices, rooms, recommendations, achievements, pointHistory } from "@shared/schema";
+import { users, devices, rooms, recommendations, achievements, pointHistory, presets } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -186,6 +186,60 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!user) throw new Error("User not found");
     return user;
+  }
+
+  async getPresets(userId: number): Promise<Preset[]> {
+    return await db
+      .select()
+      .from(presets)
+      .where(eq(presets.userId, userId))
+      .orderBy(presets.createdAt);
+  }
+
+  async getPreset(id: number): Promise<Preset | undefined> {
+    const [preset] = await db
+      .select()
+      .from(presets)
+      .where(eq(presets.id, id));
+    return preset;
+  }
+
+  async createPreset(insertPreset: InsertPreset): Promise<Preset> {
+    const [preset] = await db
+      .insert(presets)
+      .values(insertPreset)
+      .returning();
+    return preset;
+  }
+
+  async updatePreset(id: number, updateData: Partial<InsertPreset>): Promise<Preset> {
+    const [preset] = await db
+      .update(presets)
+      .set(updateData)
+      .where(eq(presets.id, id))
+      .returning();
+    if (!preset) throw new Error("Preset not found");
+    return preset;
+  }
+
+  async applyPreset(userId: number, presetId: number): Promise<Device[]> {
+    const preset = await this.getPreset(presetId);
+    if (!preset) throw new Error("Preset not found");
+
+    const updatedDevices = [];
+    for (const [deviceId, settings] of Object.entries(preset.settings)) {
+      const [device] = await db
+        .update(devices)
+        .set({
+          status: settings.status,
+          currentUsage: settings.targetUsage || 0,
+        })
+        .where(eq(devices.id, parseInt(deviceId)))
+        .returning();
+      if (device) updatedDevices.push(device);
+    }
+
+    return updatedDevices;
   }
 }
 

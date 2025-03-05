@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { generateRecommendations } from "./openai";
 import { insertDeviceSchema, insertRoomSchema } from "@shared/schema";
 import { insertAchievementSchema, insertPointHistorySchema } from "@shared/schema";
+import { insertPresetSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -129,6 +130,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     res.json({ history, user: updatedUser });
+  });
+
+  // Preset routes
+  app.get("/api/presets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const presets = await storage.getPresets(req.user.id);
+    res.json(presets);
+  });
+
+  app.post("/api/presets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const presetData = insertPresetSchema.parse({
+      ...req.body,
+      userId: req.user.id,
+    });
+    const preset = await storage.createPreset(presetData);
+    res.status(201).json(preset);
+  });
+
+  app.post("/api/presets/:id/apply", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const devices = await storage.applyPreset(req.user.id, parseInt(req.params.id));
+
+    // Add points for using energy-saving preset
+    await storage.addPointHistory({
+      userId: req.user.id,
+      points: 10,
+      reason: "Applied energy-saving preset",
+    });
+
+    res.json(devices);
   });
 
   const httpServer = createServer(app);

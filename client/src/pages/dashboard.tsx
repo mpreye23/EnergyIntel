@@ -9,6 +9,7 @@ import { EnergyTutorial } from "@/components/tutorial/energy-tutorial";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
+import { EnergyPresets } from "@/components/dashboard/energy-presets";
 
 const TUTORIAL_SHOWN_KEY = "tutorial_shown";
 
@@ -57,7 +58,10 @@ export default function Dashboard() {
           <RoomList />
         </div>
         <div className="grid gap-6 md:grid-cols-2 mt-6">
-          <DeviceList />
+          <div className="space-y-6">
+            <EnergyPresets />
+            <DeviceList />
+          </div>
           <div className="grid gap-6">
             <Achievements />
             <Recommendations />

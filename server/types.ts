@@ -1,4 +1,4 @@
-import { User, Device, Room, Recommendation, Achievement, PointHistory, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, InsertAchievement, InsertPointHistory } from "@shared/schema";
+import { User, Device, Room, Recommendation, Achievement, PointHistory, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, InsertAchievement, InsertPointHistory, Preset, InsertPreset } from "@shared/schema";
 import type { Store } from "express-session";
 
 export interface IStorage {
@@ -28,4 +28,11 @@ export interface IStorage {
   addPointHistory(history: InsertPointHistory): Promise<PointHistory>;
   updateUserLevel(userId: number, level: number): Promise<User>;
   updateAchievementProgress(userId: number, progress: Record<string, any>): Promise<User>;
+
+  // Preset management
+  getPresets(userId: number): Promise<Preset[]>;
+  getPreset(id: number): Promise<Preset | undefined>;
+  createPreset(preset: InsertPreset): Promise<Preset>;
+  updatePreset(id: number, preset: Partial<InsertPreset>): Promise<Preset>;
+  applyPreset(userId: number, presetId: number): Promise<Device[]>;
 }
