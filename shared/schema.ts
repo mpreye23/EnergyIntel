@@ -16,6 +16,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+const deviceTypes = ["light", "thermostat", "tv", "computer"] as const;
+
 export const devices = pgTable("devices", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -28,11 +30,15 @@ export const devices = pgTable("devices", {
 
 export type Device = typeof devices.$inferSelect;
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
-export const insertDeviceSchema = createInsertSchema(devices).pick({
-  userId: true,
-  name: true,
-  type: true,
-});
+export const insertDeviceSchema = createInsertSchema(devices)
+  .pick({
+    userId: true,
+    name: true,
+    type: true,
+  })
+  .extend({
+    type: z.enum(deviceTypes),
+  });
 
 export const recommendations = pgTable("recommendations", {
   id: serial("id").primaryKey(),

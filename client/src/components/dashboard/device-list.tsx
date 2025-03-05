@@ -20,11 +20,7 @@ export function DeviceList() {
   });
 
   const form = useForm({
-    resolver: zodResolver(insertDeviceSchema.extend({
-      type: insertDeviceSchema.shape.type.refine(val => ["light", "thermostat", "tv", "computer"].includes(val), {
-        message: "Please select a valid device type"
-      })
-    })),
+    resolver: zodResolver(insertDeviceSchema),
     defaultValues: {
       name: "",
       type: "light",
