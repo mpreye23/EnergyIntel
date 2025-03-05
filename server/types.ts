@@ -1,4 +1,4 @@
-import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation } from "@shared/schema";
+import { User, Device, Room, Recommendation, Achievement, PointHistory, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, InsertAchievement, InsertPointHistory } from "@shared/schema";
 import type { Store } from "express-session";
 
 export interface IStorage {
@@ -14,10 +14,18 @@ export interface IStorage {
   createRecommendation(recommendation: InsertRecommendation): Promise<Recommendation>;
   getLeaderboard(): Promise<User[]>;
 
-  // New room management functions
+  // Room management functions
   getRooms(userId: number): Promise<Room[]>;
   getRoom(id: number): Promise<Room | undefined>;
   createRoom(room: InsertRoom): Promise<Room>;
   getDevicesByRoom(roomId: number): Promise<Device[]>;
   updateDeviceRoom(deviceId: number, roomId: number | null): Promise<Device>;
+
+  // New gamification functions
+  getAchievements(userId: number): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  getPointHistory(userId: number): Promise<PointHistory[]>;
+  addPointHistory(history: InsertPointHistory): Promise<PointHistory>;
+  updateUserLevel(userId: number, level: number): Promise<User>;
+  updateAchievementProgress(userId: number, progress: Record<string, any>): Promise<User>;
 }

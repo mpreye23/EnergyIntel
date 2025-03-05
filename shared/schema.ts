@@ -7,6 +7,8 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   energyPoints: integer("energy_points").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  achievementProgress: jsonb("achievement_progress").notNull().default({}),
 });
 
 export type User = typeof users.$inferSelect;
@@ -80,4 +82,42 @@ export type InsertRecommendation = z.infer<typeof insertRecommendationSchema>;
 export const insertRecommendationSchema = createInsertSchema(recommendations).pick({
   userId: true,
   content: true,
+});
+
+// Add new achievements table
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: text("type").notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  points: integer("points").notNull(),
+  unlockedAt: timestamp("unlocked_at").notNull().defaultNow(),
+});
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export const insertAchievementSchema = createInsertSchema(achievements).pick({
+  userId: true,
+  type: true,
+  name: true,
+  description: true,
+  points: true,
+});
+
+// Add point history table for tracking point changes
+export const pointHistory = pgTable("point_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  points: integer("points").notNull(),
+  reason: text("reason").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+export type PointHistory = typeof pointHistory.$inferSelect;
+export type InsertPointHistory = z.infer<typeof insertPointHistorySchema>;
+export const insertPointHistorySchema = createInsertSchema(pointHistory).pick({
+  userId: true,
+  points: true,
+  reason: true,
 });

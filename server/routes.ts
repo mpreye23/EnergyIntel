@@ -4,6 +4,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { generateRecommendations } from "./openai";
 import { insertDeviceSchema, insertRoomSchema } from "@shared/schema";
+import { insertAchievementSchema, insertPointHistorySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -79,6 +80,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const leaderboard = await storage.getLeaderboard();
     res.json(leaderboard);
+  });
+
+  // Gamification routes
+  app.get("/api/achievements", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const achievements = await storage.getAchievements(req.user.id);
+    res.json(achievements);
+  });
+
+  app.get("/api/points/history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const history = await storage.getPointHistory(req.user.id);
+    res.json(history);
+  });
+
+  app.post("/api/achievements", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const achievementData = insertAchievementSchema.parse({
+      ...req.body,
+      userId: req.user.id,
+    });
+    const achievement = await storage.createAchievement(achievementData);
+    res.status(201).json(achievement);
+  });
+
+  app.post("/api/points/add", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const pointData = insertPointHistorySchema.parse({
+      ...req.body,
+      userId: req.user.id,
+    });
+
+    // Add points to history
+    const history = await storage.addPointHistory(pointData);
+
+    // Update user's total points
+    const user = await storage.getUser(req.user.id);
+    if (!user) return res.sendStatus(404);
+
+    const newPoints = user.energyPoints + pointData.points;
+    const updatedUser = await storage.updateUserPoints(user.id, newPoints);
+
+    // Check for level up (every 1000 points)
+    const newLevel = Math.floor(newPoints / 1000) + 1;
+    if (newLevel > user.level) {
+      await storage.updateUserLevel(user.id, newLevel);
+    }
+
+    res.json({ history, user: updatedUser });
   });
 
   const httpServer = createServer(app);

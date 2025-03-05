@@ -4,6 +4,7 @@ import { RoomList } from "@/components/dashboard/room-list";
 import { EnergyChart } from "@/components/dashboard/energy-chart";
 import { Recommendations } from "@/components/dashboard/recommendations";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
+import { Achievements } from "@/components/dashboard/achievements";
 import { EnergyTutorial } from "@/components/tutorial/energy-tutorial";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -16,7 +17,6 @@ export default function Dashboard() {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    // Check if tutorial has been shown before
     const tutorialShown = localStorage.getItem(TUTORIAL_SHOWN_KEY);
     if (!tutorialShown) {
       setShowTutorial(true);
@@ -59,6 +59,7 @@ export default function Dashboard() {
         <div className="grid gap-6 md:grid-cols-2 mt-6">
           <DeviceList />
           <div className="grid gap-6">
+            <Achievements />
             <Recommendations />
             <Leaderboard />
           </div>

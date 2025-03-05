@@ -1,8 +1,8 @@
 import { IStorage } from "./types";
-import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation } from "@shared/schema";
+import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation, Achievement, InsertAchievement, PointHistory, InsertPointHistory } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users, devices, rooms, recommendations } from "@shared/schema";
+import { users, devices, rooms, recommendations, achievements, pointHistory } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -134,6 +134,58 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .orderBy(users.energyPoints)
       .limit(10);
+  }
+
+  async getAchievements(userId: number): Promise<Achievement[]> {
+    return await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.userId, userId))
+      .orderBy(achievements.unlockedAt);
+  }
+
+  async createAchievement(insertAchievement: InsertAchievement): Promise<Achievement> {
+    const [achievement] = await db
+      .insert(achievements)
+      .values(insertAchievement)
+      .returning();
+    return achievement;
+  }
+
+  async getPointHistory(userId: number): Promise<PointHistory[]> {
+    return await db
+      .select()
+      .from(pointHistory)
+      .where(eq(pointHistory.userId, userId))
+      .orderBy(pointHistory.timestamp);
+  }
+
+  async addPointHistory(insertHistory: InsertPointHistory): Promise<PointHistory> {
+    const [history] = await db
+      .insert(pointHistory)
+      .values(insertHistory)
+      .returning();
+    return history;
+  }
+
+  async updateUserLevel(userId: number, level: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ level })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
+  async updateAchievementProgress(userId: number, progress: Record<string, any>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ achievementProgress: progress })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) throw new Error("User not found");
+    return user;
   }
 }
 
