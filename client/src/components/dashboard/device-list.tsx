@@ -12,15 +12,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export function DeviceList() {
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
   const { data: devices, isLoading } = useQuery<Device[]>({
     queryKey: ["/api/devices"],
   });
 
   const form = useForm({
-    resolver: zodResolver(insertDeviceSchema),
+    resolver: zodResolver(insertDeviceSchema.omit({ userId: true })),
     defaultValues: {
       name: "",
       type: "light",
@@ -29,13 +34,28 @@ export function DeviceList() {
 
   const addDeviceMutation = useMutation({
     mutationFn: async (data: { name: string; type: string }) => {
-      const res = await apiRequest("POST", "/api/devices", data);
+      if (!user) throw new Error("User not authenticated");
+      const res = await apiRequest("POST", "/api/devices", {
+        ...data,
+        userId: user.id,
+      });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/devices"] });
       setOpen(false);
       form.reset();
+      toast({
+        title: "Success",
+        description: "Device added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -46,6 +66,13 @@ export function DeviceList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/devices"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
