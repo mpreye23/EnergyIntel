@@ -1,4 +1,4 @@
-import { User, Device, Recommendation, InsertUser, InsertDevice, InsertRecommendation } from "@shared/schema";
+import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation } from "@shared/schema";
 import type { Store } from "express-session";
 
 export interface IStorage {
@@ -13,4 +13,11 @@ export interface IStorage {
   getRecommendations(userId: number): Promise<Recommendation[]>;
   createRecommendation(recommendation: InsertRecommendation): Promise<Recommendation>;
   getLeaderboard(): Promise<User[]>;
+
+  // New room management functions
+  getRooms(userId: number): Promise<Room[]>;
+  getRoom(id: number): Promise<Room | undefined>;
+  createRoom(room: InsertRoom): Promise<Room>;
+  getDevicesByRoom(roomId: number): Promise<Device[]>;
+  updateDeviceRoom(deviceId: number, roomId: number | null): Promise<Device>;
 }

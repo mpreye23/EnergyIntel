@@ -3,12 +3,12 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { generateRecommendations } from "./openai";
-import { insertDeviceSchema } from "@shared/schema";
+import { insertDeviceSchema, insertRoomSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Device routes
+  // Existing device routes
   app.get("/api/devices", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const devices = await storage.getDevices(req.user.id);
@@ -28,24 +28,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(device);
   });
 
-  // Recommendations routes
+  // New room routes
+  app.get("/api/rooms", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const rooms = await storage.getRooms(req.user.id);
+    res.json(rooms);
+  });
+
+  app.post("/api/rooms", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const roomData = insertRoomSchema.parse({ ...req.body, userId: req.user.id });
+    const room = await storage.createRoom(roomData);
+    res.status(201).json(room);
+  });
+
+  app.get("/api/rooms/:id/devices", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const devices = await storage.getDevicesByRoom(parseInt(req.params.id));
+    res.json(devices);
+  });
+
+  app.post("/api/devices/:id/room", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const device = await storage.updateDeviceRoom(
+      parseInt(req.params.id),
+      req.body.roomId ? parseInt(req.body.roomId) : null
+    );
+    res.json(device);
+  });
+
+  // Existing recommendation routes
   app.get("/api/recommendations", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const devices = await storage.getDevices(req.user.id);
     const recommendations = await generateRecommendations(devices);
-    
+
     for (const content of recommendations) {
       await storage.createRecommendation({
         userId: req.user.id,
         content,
       });
     }
-    
+
     const userRecs = await storage.getRecommendations(req.user.id);
     res.json(userRecs);
   });
 
-  // Leaderboard route
+  // Existing leaderboard route
   app.get("/api/leaderboard", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const leaderboard = await storage.getLeaderboard();

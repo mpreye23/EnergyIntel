@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { DeviceList } from "@/components/dashboard/device-list";
+import { RoomList } from "@/components/dashboard/room-list";
 import { EnergyChart } from "@/components/dashboard/energy-chart";
 import { Recommendations } from "@/components/dashboard/recommendations";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
@@ -32,11 +33,14 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6 md:grid-cols-2">
           <EnergyChart />
-          <DeviceList />
+          <RoomList />
         </div>
         <div className="grid gap-6 md:grid-cols-2 mt-6">
-          <Recommendations />
-          <Leaderboard />
+          <DeviceList />
+          <div className="grid gap-6">
+            <Recommendations />
+            <Leaderboard />
+          </div>
         </div>
       </main>
     </div>

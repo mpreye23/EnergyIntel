@@ -16,11 +16,37 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Add rooms table
+export const rooms = pgTable("rooms", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  floor: integer("floor").notNull().default(1),
+});
+
+const roomTypes = ["living", "bedroom", "kitchen", "bathroom", "office", "other"] as const;
+
+export type Room = typeof rooms.$inferSelect;
+export type InsertRoom = z.infer<typeof insertRoomSchema>;
+export const insertRoomSchema = createInsertSchema(rooms)
+  .pick({
+    userId: true,
+    name: true,
+    type: true,
+    floor: true,
+  })
+  .extend({
+    type: z.enum(roomTypes),
+  });
+
 const deviceTypes = ["light", "thermostat", "tv", "computer"] as const;
 
+// Update devices table to include roomId
 export const devices = pgTable("devices", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  roomId: integer("room_id"),  // Optional - device can be unassigned
   name: text("name").notNull(),
   type: text("type").notNull(),
   status: boolean("status").notNull().default(false),
@@ -33,11 +59,13 @@ export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export const insertDeviceSchema = createInsertSchema(devices)
   .pick({
     userId: true,
+    roomId: true,
     name: true,
     type: true,
   })
   .extend({
     type: z.enum(deviceTypes),
+    roomId: z.number().nullable(),
   });
 
 export const recommendations = pgTable("recommendations", {

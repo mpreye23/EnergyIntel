@@ -1,8 +1,8 @@
 import { IStorage } from "./types";
-import { User, Device, Recommendation, InsertUser, InsertDevice, InsertRecommendation } from "@shared/schema";
+import { User, Device, Room, Recommendation, InsertUser, InsertDevice, InsertRoom, InsertRecommendation } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users, devices, recommendations } from "@shared/schema";
+import { users, devices, rooms, recommendations } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -67,6 +67,46 @@ export class DatabaseStorage implements IStorage {
       .update(devices)
       .set({ status })
       .where(eq(devices.id, id))
+      .returning();
+    if (!device) throw new Error("Device not found");
+    return device;
+  }
+
+  async getRooms(userId: number): Promise<Room[]> {
+    return await db
+      .select()
+      .from(rooms)
+      .where(eq(rooms.userId, userId));
+  }
+
+  async getRoom(id: number): Promise<Room | undefined> {
+    const [room] = await db
+      .select()
+      .from(rooms)
+      .where(eq(rooms.id, id));
+    return room;
+  }
+
+  async createRoom(insertRoom: InsertRoom): Promise<Room> {
+    const [room] = await db
+      .insert(rooms)
+      .values(insertRoom)
+      .returning();
+    return room;
+  }
+
+  async getDevicesByRoom(roomId: number): Promise<Device[]> {
+    return await db
+      .select()
+      .from(devices)
+      .where(eq(devices.roomId, roomId));
+  }
+
+  async updateDeviceRoom(deviceId: number, roomId: number | null): Promise<Device> {
+    const [device] = await db
+      .update(devices)
+      .set({ roomId })
+      .where(eq(devices.id, deviceId))
       .returning();
     if (!device) throw new Error("Device not found");
     return device;
