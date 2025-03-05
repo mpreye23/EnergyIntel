@@ -20,6 +20,10 @@ export async function generateRecommendations(deviceData: any): Promise<string[]
       response_format: { type: "json_object" },
     });
 
+    if (!response.choices[0].message.content) {
+      throw new Error("No content in OpenAI response");
+    }
+
     const result = JSON.parse(response.choices[0].message.content);
     return result.recommendations || [];
   } catch (error) {
