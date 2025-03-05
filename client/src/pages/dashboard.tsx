@@ -4,11 +4,25 @@ import { RoomList } from "@/components/dashboard/room-list";
 import { EnergyChart } from "@/components/dashboard/energy-chart";
 import { Recommendations } from "@/components/dashboard/recommendations";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
+import { EnergyTutorial } from "@/components/tutorial/energy-tutorial";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+
+const TUTORIAL_SHOWN_KEY = "tutorial_shown";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    // Check if tutorial has been shown before
+    const tutorialShown = localStorage.getItem(TUTORIAL_SHOWN_KEY);
+    if (!tutorialShown) {
+      setShowTutorial(true);
+      localStorage.setItem(TUTORIAL_SHOWN_KEY, "true");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -16,6 +30,13 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">EcoSync Dashboard</h1>
           <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTutorial(true)}
+            >
+              Show Tutorial
+            </Button>
             <span className="text-muted-foreground">Welcome, {user?.username}</span>
             <Button
               variant="outline"
@@ -43,6 +64,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      <EnergyTutorial
+        open={showTutorial}
+        onOpenChange={setShowTutorial}
+      />
     </div>
   );
 }
